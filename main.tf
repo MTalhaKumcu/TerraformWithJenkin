@@ -6,7 +6,7 @@ resource "aws_instance" "JenkinsServer" {
   instance_type   = var.instance_type
   subnet_id       = var.subnet_id
   security_groups = [aws_security_group.ec2-sec-gr.id]
-  user_data       = base64decode(local.user_data)
+  user_data       = templatefile("${path.module}/user_data.sh", {})
   key_name        = var.key_name
   tags            = var.tags
 }
@@ -45,21 +45,4 @@ resource "aws_security_group" "ec2-sec-gr" {
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
-}
-
-locals {
-  user_data = <<EOF
-  
-  #!/bin/bash
-  sudo yum update -y
-  sudo amazon-linux-extras install java-openjdk11 -y
-  wget -O /etc/yum.repos.d/jenkins.repo http://pkg.jenkins-ci.org/redhat/jenkins.repo
-  rpm --import https://pkg.jenkins.io/redhat/jenkins.io.key
-  sudo yum install jenkins -y
-  sudo systemctl start jenkins
-  sudo systemctl enable jenkins
-  sudo firewall-cmd --permanent --zone=public --add-port=8080/tcp
-  sudo firewall-cmd --reload
-  echo "Jenkins setup complete" >> ~/user-data.txt
-EOF
 }
